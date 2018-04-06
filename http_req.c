@@ -1,9 +1,11 @@
-#include "http_req.h"
 #include <stdlib.h>
+
+#include "http_req.h"
 #include "strutils.h"
 
 struct HTTPReq *parseRequest(char *buf) {
   char **lines = tokenize(buf, "\r\n");
+  char **_lines = lines;
   struct HTTPReq *request = malloc(sizeof(struct HTTPReq));
 
   // Get the path
@@ -21,6 +23,6 @@ struct HTTPReq *parseRequest(char *buf) {
       request->gzip = contains(value, "gzip");
   }
 
-  // free(lines);
+  free(_lines);
   return request;
 }

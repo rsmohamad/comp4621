@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "http_req.h"
+#include "http_res.h"
 
 #define MAXLINE 2048
 #define PORT 80
@@ -26,8 +27,12 @@ void *serveFile(void *sock) {
   printf("path: %s\n", req->path);
   printf("gzip: %d\n\n", req->gzip);
 
-  sprintf(txbuf, "Hello world\n");
-  write(sockfd, txbuf, strlen(txbuf));
+  struct HTTPRes res;
+  res.server = "comp4621";
+  readContent(&res, req->path, 0);
+  setCurrentDate(&res);
+  writeToSocket(&res, sockfd);
+
   close(sockfd);
   return 0;
 }
@@ -55,12 +60,12 @@ int main(int argc, char **argv) {
   }
 
   if (bind(listenfd, (struct sockaddr *)&servaddr, len) < 0) {
-    fprintf(stderr, "Error: cannot bind to port 80\n");
+    fprintf(stderr, "Error: cannot bind to port %d\n", PORT);
     return 1;
   }
 
   if (listen(listenfd, 5) < 0) {
-    fprintf(stderr, "Error: cannot listen on port 80\n");
+    fprintf(stderr, "Error: cannot listen on port %d\n", PORT);
     return 1;
   }
 
