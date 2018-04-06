@@ -1,33 +1,53 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "http_req.h"
+
 #define MAXLINE 2048
+#define PORT 80
+
+int listenfd;
 
 void *serveFile(void *sock) {
   int sockfd = *(int *)sock;
   char txbuf[MAXLINE] = {0};
+  read(sockfd, txbuf, MAXLINE);
+
+  struct HTTPReq *req = parseRequest(txbuf);
+  printf("host: %s\n", req->host);
+  printf("path: %s\n", req->path);
+  printf("gzip: %d\n\n", req->gzip);
+
   sprintf(txbuf, "Hello world\n");
   write(sockfd, txbuf, strlen(txbuf));
   close(sockfd);
-  usleep(1000);
   return 0;
 }
 
+void terminateHandler(int num) {
+  printf("\nExiting\n");
+  close(listenfd);
+  exit(0);
+}
+
 int main(int argc, char **argv) {
-  int listenfd, sockfd;
+  signal(SIGINT, terminateHandler);
+
   struct sockaddr_in servaddr, cliaddr;
   socklen_t len = sizeof(struct sockaddr_in);
 
   memset(&servaddr, 0, sizeof(servaddr));
   servaddr.sin_family = AF_INET;
   servaddr.sin_addr.s_addr = INADDR_ANY;
-  servaddr.sin_port = htons(80);
+  servaddr.sin_port = htons(PORT);
 
   if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     fprintf(stderr, "Error: cannot open a socket\n");
@@ -44,10 +64,11 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  printf("Listening on port 80 ...\n");
+  printf("Listening on port %d ...\n", PORT);
 
   while (1) {
-    if ((sockfd = accept(listenfd, (struct sockaddr *)&cliaddr, &len)) < 0) {
+    int sockfd = accept(listenfd, (struct sockaddr *)&cliaddr, &len);
+    if (sockfd < 0) {
       fprintf(stderr, "Error: cannot accept incoming request\n");
       continue;
     }
@@ -61,8 +82,6 @@ int main(int argc, char **argv) {
       fprintf(stderr, "Error: cannot create thread for %s\n", ip_str);
       close(sockfd);
     }
-
-    usleep(1000);
   }
 
   return 0;

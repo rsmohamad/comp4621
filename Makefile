@@ -1,10 +1,10 @@
 CC=clang
 SRCS=$(wildcard *.c)
+HEAD=$(wildcard *.h)
 OBJS=$(patsubst %.c, %.o, $(SRCS))
 CFLAGS=
 
 %.o: %.c
-	clang-format -i -style=google $^
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 default: server
@@ -22,3 +22,6 @@ libz.a:
 
 zip:
 	git archive --format=zip --prefix=comp4621/ --output=comp4621.zip HEAD
+
+format:
+	clang-format -i -style=google $(HEAD) $(SRCS)
