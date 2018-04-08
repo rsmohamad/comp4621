@@ -2,13 +2,14 @@
 #define HTTPRES_H
 
 struct HTTPRes {
-  unsigned char *content;
-  char *contentEnc;
-  char *contentType;
+  int chunked;
+  int gzipped;
+  char *type;
   char *date;
   char *server;
-  char *status;
-  char *transferEnc;
+  char *status;  
+  size_t len;
+  unsigned char *content;
 };
 
 void readContent(struct HTTPRes *, char *, int);
