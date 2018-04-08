@@ -36,9 +36,9 @@ void setContentType(struct HTTPRes *response, char *path) {
 }
 
 void set404(struct HTTPRes *response) {
-  char text[] = "File not found\n";
+  char text[] = "<h1>File not found</h1>\n";
   response->status = "404 Not found";
-  response->type = "text/plain";
+  response->type = "text/html";
   response->gzipped = 0;
   response->chunked = 0;
   response->content = malloc(32);
@@ -80,10 +80,10 @@ int readFile(struct HTTPRes *response, char *path) {
 void setContent(struct HTTPRes *response, char *path, int useGzip) {
   if (strcmp(path, "/") == 0 || strlen(path) == 0)
     path = "index.html";
-  else
+  else if (strstr(path, "/") == path)
     path++;
 
-  if (readFile(response, path))
+  if (readFile(response, path) < 0)
     return set404(response);
 
   if (useGzip) {
@@ -106,7 +106,6 @@ void writeToSocket(struct HTTPRes *response, int sockfd) {
   getHeaderStr(response, header);
 
   printf("%s", header);
-  printf("%s\n", response->content);
 
   write(sockfd, header, strlen(header));
   write(sockfd, response->content, response->len);

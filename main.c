@@ -18,13 +18,12 @@
 int listenfd;
 
 void *serveFile(void *sock) {
-  int *sockfd = (int *)sock;
+  int sockfd = (int)sock;
   char txbuf[MAXLINE] = {0};
 
-  if (read(*sockfd, txbuf, MAXLINE) <= 0) {
+  if (read(sockfd, txbuf, MAXLINE) <= 0) {
     printf("No http request received\n");
-    close(*sockfd);
-    free(sockfd);
+    close(sockfd);
     return 0;
   }
 
@@ -34,17 +33,13 @@ void *serveFile(void *sock) {
   printf("gzip: %d\n\n", req->gzip);
 
   struct HTTPRes res;
-  memset(&res, 0, sizeof(res));
   res.server = "comp4621";
   setCurrentDate(&res);
   setContent(&res, req->path, req->gzip);
-  writeToSocket(&res, *sockfd);
-
-  printf("Done writing\n");
+  writeToSocket(&res, sockfd);
 
   cleanup(&res);
-  close(*sockfd);
-  free(sockfd);
+  close(sockfd);
   free(req);
   return 0;
 }
@@ -85,10 +80,8 @@ int main(int argc, char **argv) {
   printf("Listening on port %d ...\n", PORT);
 
   while (1) {
-    int *sockfd = malloc(sizeof(int));
-    *sockfd = accept(listenfd, (struct sockaddr *)&cliaddr, &len);
-
-    if (*sockfd < 0) {
+    int sockfd;
+    if ((sockfd = accept(listenfd, (struct sockaddr *)&cliaddr, &len)) < 0) {
       fprintf(stderr, "Error: cannot accept incoming request\n");
       continue;
     }
@@ -100,8 +93,9 @@ int main(int argc, char **argv) {
     pthread_t tid;
     if (pthread_create(&tid, NULL, serveFile, (void *)sockfd) < 0) {
       fprintf(stderr, "Error: cannot create thread for %s\n", ip_str);
-      close(*sockfd);
+      close(sockfd);
     }
+    pthread_detach(tid);
   }
 
   return 0;
