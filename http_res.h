@@ -7,12 +7,13 @@ struct HTTPRes {
   char *type;
   char *date;
   char *server;
-  char *status;  
+  char *status;
   size_t len;
   unsigned char *content;
 };
 
-void readContent(struct HTTPRes *, char *, int);
+void cleanup(struct HTTPRes *);
+void setContent(struct HTTPRes *, char *, int);
 void setCurrentDate(struct HTTPRes *);
 void writeToSocket(struct HTTPRes *, int);
 

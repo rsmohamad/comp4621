@@ -20,14 +20,13 @@ int listenfd;
 void *serveFile(void *sock) {
   int *sockfd = (int *)sock;
   char txbuf[MAXLINE] = {0};
+
   if (read(*sockfd, txbuf, MAXLINE) <= 0) {
-    printf("Ripperonni\n");
+    printf("No http request received\n");
     close(*sockfd);
-    usleep(1000);
+    free(sockfd);
     return 0;
   }
-
-  printf("%s\n", txbuf);
 
   struct HTTPReq *req = parseRequest(txbuf);
   printf("host: %s\n", req->host);
@@ -35,14 +34,15 @@ void *serveFile(void *sock) {
   printf("gzip: %d\n\n", req->gzip);
 
   struct HTTPRes res;
-  readContent(&res, req->path, req->gzip);
-  setCurrentDate(&res);
   res.server = "comp4621";
+  setCurrentDate(&res);
+  setContent(&res, req->path, req->gzip);
   writeToSocket(&res, *sockfd);
 
-  usleep(1000);
+  cleanup(&res);
   close(*sockfd);
   free(sockfd);
+  free(req);
   return 0;
 }
 
@@ -84,6 +84,7 @@ int main(int argc, char **argv) {
   while (1) {
     int *sockfd = malloc(sizeof(int));
     *sockfd = accept(listenfd, (struct sockaddr *)&cliaddr, &len);
+
     if (*sockfd < 0) {
       fprintf(stderr, "Error: cannot accept incoming request\n");
       continue;
@@ -91,14 +92,13 @@ int main(int argc, char **argv) {
 
     char ip_str[INET_ADDRSTRLEN] = {0};
     inet_ntop(AF_INET, &(cliaddr.sin_addr), ip_str, INET_ADDRSTRLEN);
-    printf("Incoming connection from %s\n", ip_str);
+    printf("\nIncoming connection from %s\n", ip_str);
 
     pthread_t tid;
     if (pthread_create(&tid, NULL, serveFile, (void *)sockfd) < 0) {
       fprintf(stderr, "Error: cannot create thread for %s\n", ip_str);
       close(*sockfd);
     }
-    usleep(10000);
   }
 
   return 0;

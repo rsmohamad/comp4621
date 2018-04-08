@@ -24,4 +24,4 @@ zip:
 	git archive --format=zip --prefix=comp4621/ --output=comp4621.zip HEAD
 
 format:
-	clang-format -i -style=google $(HEAD) $(SRCS)
+	clang-format -i -style=llvm $(HEAD) $(SRCS)
