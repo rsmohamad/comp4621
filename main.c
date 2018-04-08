@@ -53,6 +53,7 @@ void terminateHandler(int num) {
 
 int main(int argc, char **argv) {
   signal(SIGINT, terminateHandler);
+  chdir("files");
 
   struct sockaddr_in servaddr, cliaddr;
   socklen_t len = sizeof(struct sockaddr_in);

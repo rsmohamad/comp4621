@@ -12,8 +12,11 @@ const struct {
   char *type;
 } mime[] = {{".css", "text/css"},
             {".jpg", "image/jpeg"},
+            {".jpeg", "image/jpeg"},
+            {".png", "image/png"},
             {".pdf", "application/pdf"},
             {".html", "text/html"},
+            {".ppt", "application/vnd.ms-powerpoint"},
             {".pptx",
              "application/"
              "vnd.openxmlformats-officedocument.presentationml.presentation"},
@@ -36,14 +39,8 @@ void setContentType(struct HTTPRes *response, char *path) {
 }
 
 void set404(struct HTTPRes *response) {
-  char text[] = "<h1>File not found</h1>\n";
-  response->status = "404 Not found";
-  response->type = "text/html";
-  response->gzipped = 0;
-  response->chunked = 0;
-  response->content = malloc(32);
-  response->len = strlen(text);
-  strncpy((char *)response->content, text, 32);
+  setContent(response, "404.html", 0);
+  response->status = "404 Not Found";
 }
 
 void getHeaderStr(struct HTTPRes *response, char *h) {
