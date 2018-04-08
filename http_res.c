@@ -30,18 +30,20 @@ void setContentType(struct HTTPRes *response, char *path) {
   char *ext = strrchr(path, '.');
   response->type = "text/plain";
 
-  for (int ptr = 0; mime[ptr].ext != 0; ptr++)
+  for (int ptr = 0; ext && mime[ptr].ext != 0; ptr++)
     if (strcmp(mime[ptr].ext, ext) == 0)
       response->type = mime[ptr].type;
 }
 
 void set404(struct HTTPRes *response) {
+  char text[] = "File not found\n";
   response->status = "404 Not found";
-  response->content = (unsigned char *)"File not found\n";
-  response->len = strlen((char *)response->content);
   response->type = "text/plain";
   response->gzipped = 0;
   response->chunked = 0;
+  response->content = malloc(32);
+  response->len = strlen(text);
+  strncpy((char *)response->content, text, 32);
 }
 
 void getHeaderStr(struct HTTPRes *response, char *h) {
@@ -111,8 +113,8 @@ void writeToSocket(struct HTTPRes *response, int sockfd) {
 }
 
 void cleanup(struct HTTPRes *response) {
-    if (response->date)
-        free(response->date);
-    if (response->content)
-        free(response->content);
+  if (response->date)
+    free(response->date);
+  if (response->content)
+    free(response->content);
 }

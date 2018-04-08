@@ -34,10 +34,13 @@ void *serveFile(void *sock) {
   printf("gzip: %d\n\n", req->gzip);
 
   struct HTTPRes res;
+  memset(&res, 0, sizeof(res));
   res.server = "comp4621";
   setCurrentDate(&res);
   setContent(&res, req->path, req->gzip);
   writeToSocket(&res, *sockfd);
+
+  printf("Done writing\n");
 
   cleanup(&res);
   close(*sockfd);
