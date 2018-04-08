@@ -7,6 +7,8 @@
 #include "gzip.h"
 #include "http_res.h"
 
+#define CHUNK_SIZE 4096
+
 const struct {
   char *ext;
   char *type;
@@ -54,6 +56,8 @@ void getHeaderStr(struct HTTPRes *response, char *h) {
 
   if (response->chunked)
     sprintf(h + strlen(h), "Transfer-Encoding: chunked\r\n");
+  else
+    sprintf(h + strlen(h), "Content-Length: %zu\r\n", response->len);
 
   sprintf(h + strlen(h), "Connection: close\r\n");
   sprintf(h + strlen(h), "\r\n");
@@ -94,7 +98,7 @@ void setContent(struct HTTPRes *response, char *path, int useGzip) {
 
   response->gzipped = useGzip;
   response->status = "200 OK";
-  response->chunked = 0;
+  response->chunked = 1;
   setContentType(response, path);
 }
 
@@ -105,7 +109,28 @@ void writeToSocket(struct HTTPRes *response, int sockfd) {
   printf("%s", header);
 
   write(sockfd, header, strlen(header));
-  write(sockfd, response->content, response->len);
+
+  if (!response->chunked)
+    write(sockfd, response->content, response->len);
+  else {
+      size_t remains = response->len;
+      unsigned char *ptr = response->content;
+
+      while(remains > 0){
+          int written = remains > CHUNK_SIZE ? CHUNK_SIZE : remains;
+          sprintf(header, "%X\r\n", written);
+          printf("%s", header);
+          write(sockfd, header, strlen(header));
+          write(sockfd, ptr, written);
+          write(sockfd, "\r\n", 2);
+          ptr += written;
+          remains -= written;
+      }
+
+      write(sockfd, "0\r\n", 3);
+      write(sockfd, "\r\n", 2);
+      printf("\n");
+  }
 }
 
 void cleanup(struct HTTPRes *response) {
