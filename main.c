@@ -12,40 +12,49 @@
 #define MAXLINE 2048
 #define PORT 80
 #define QUEUE_LEN 5
-#define TIMEOUT 1
+#define TIMEOUT 5
+#define MAX_REQ 2
 
 int listenfd;
 
 void *serveFile(void *sock) {
   int sockfd = (int)sock;
   char txbuf[MAXLINE] = {0};
+  int served = 0;
 
-  if (read(sockfd, txbuf, MAXLINE) <= 0) {
-    fprintf(stderr, "Error: no http request received\n");
-    close(sockfd);
-    return 0;
-  }
+  while (served++ < MAX_REQ) {
+    if (read(sockfd, txbuf, MAXLINE) <= 0) {
+      printf("Connection timeout, closing socket: %d\n", sockfd);
+      break;
+    }
 
-  struct HTTPReq *req = parseRequest(txbuf);
-  if (req == NULL){
+    struct HTTPReq *req = parseRequest(txbuf);
+    if (req == NULL) {
       fprintf(stderr, "Error: bad http request\n");
       close(sockfd);
       return 0;
+    }
+
+    printf("sock: %d\n", sockfd);
+    printf("host: %s\n", req->host);
+    printf("path: %s\n", req->path);
+    printf("gzip: %d\n\n", req->gzip);
+
+    struct HTTPRes res;
+    res.server = "comp4621";
+    setCurrentDate(&res);
+    setContent(&res, req->path, req->gzip);
+    setKeepAlive(&res, TIMEOUT, MAX_REQ);
+    writeToSocket(&res, sockfd);
+
+    free(req);
+    cleanup(&res);
   }
 
-  printf("host: %s\n", req->host);
-  printf("path: %s\n", req->path);
-  printf("gzip: %d\n\n", req->gzip);
+  if (served >= MAX_REQ)
+    printf("Max requests served (%d), closing socket: %d\n", MAX_REQ, sockfd);
 
-  struct HTTPRes res;
-  res.server = "comp4621";
-  setCurrentDate(&res);
-  setContent(&res, req->path, req->gzip);
-  writeToSocket(&res, sockfd);
-
-  cleanup(&res);
   close(sockfd);
-  free(req);
   return 0;
 }
 
@@ -59,14 +68,14 @@ void terminateHandler(int num) {
 int main(int argc, char **argv) {
   signal(SIGINT, terminateHandler);
   chdir("files");
-    char ip_str[INET_ADDRSTRLEN] = {0};
+  char ip_str[INET_ADDRSTRLEN] = {0};
 
   struct sockaddr_in servaddr, cliaddr;
   socklen_t len = sizeof(struct sockaddr_in);
 
-    struct timeval timeout;
-    timeout.tv_sec = TIMEOUT;
-    timeout.tv_usec = 0;
+  struct timeval timeout;
+  timeout.tv_sec = TIMEOUT;
+  timeout.tv_usec = 0;
 
   memset(&servaddr, 0, sizeof(servaddr));
   servaddr.sin_family = AF_INET;
@@ -97,7 +106,8 @@ int main(int argc, char **argv) {
       continue;
     }
 
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout,
+               sizeof(timeout));
     inet_ntop(AF_INET, &(cliaddr.sin_addr), ip_str, INET_ADDRSTRLEN);
     printf("\nIncoming connection from %s\n", ip_str);
 

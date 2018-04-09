@@ -10,9 +10,14 @@ struct HTTPRes {
   char *status;
   size_t len;
   unsigned char *content;
+
+  // Keep alive properties
+  int max;
+  int timeout;
 };
 
 void cleanup(struct HTTPRes *);
+void setKeepAlive(struct HTTPRes *, int, int);
 void setContent(struct HTTPRes *, char *, int);
 void setCurrentDate(struct HTTPRes *);
 void writeToSocket(struct HTTPRes *, int);
