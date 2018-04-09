@@ -90,7 +90,7 @@ void setContent(struct HTTPRes *response, char *path, int useGzip) {
   if (useGzip) {
     unsigned char *compressed = malloc(response->len);
     size_t complen = response->len;
-    int err = compressToGzip(compressed, &complen, response->content, complen);
+    compressToGzip(compressed, &complen, response->content, complen);
     free(response->content);
     response->content = compressed;
     response->len = complen;
@@ -105,9 +105,7 @@ void setContent(struct HTTPRes *response, char *path, int useGzip) {
 void writeToSocket(struct HTTPRes *response, int sockfd) {
   char header[1024];
   getHeaderStr(response, header);
-
   printf("%s", header);
-
   write(sockfd, header, strlen(header));
 
   if (!response->chunked)
@@ -119,7 +117,6 @@ void writeToSocket(struct HTTPRes *response, int sockfd) {
       while(remains > 0){
           int written = remains > CHUNK_SIZE ? CHUNK_SIZE : remains;
           sprintf(header, "%X\r\n", written);
-          printf("%s", header);
           write(sockfd, header, strlen(header));
           write(sockfd, ptr, written);
           write(sockfd, "\r\n", 2);
@@ -127,9 +124,7 @@ void writeToSocket(struct HTTPRes *response, int sockfd) {
           remains -= written;
       }
 
-      write(sockfd, "0\r\n", 3);
-      write(sockfd, "\r\n", 2);
-      printf("\n");
+      write(sockfd, "0\r\n\r\n", 5);
   }
 }
 

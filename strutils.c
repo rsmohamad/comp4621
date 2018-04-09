@@ -8,6 +8,11 @@ char **tokenize(char *text, char *delimiter) {
   char **tokens = malloc(sizeof(char *) * size);
   char *token = strtok(text, delimiter);
 
+  if (token == NULL){
+    free(tokens);
+    return NULL;
+  }
+
   do {
     tokens[ptr++] = token;
     if (ptr == size) {
@@ -31,4 +36,8 @@ char *getValue(char *text, char *key, char *delim) {
 
 int contains(char *haystack, char *needle) {
   return strstr(haystack, needle) != NULL;
+}
+
+void cleanPath(char *path){
+
 }

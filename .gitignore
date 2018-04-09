@@ -2,3 +2,7 @@ server
 *.zip
 *.o
 *.a
+cmake-build-debug/
+.idea/
+CMakeLists.txt
+
