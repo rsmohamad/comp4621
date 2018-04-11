@@ -38,4 +38,3 @@ int contains(char *haystack, char *needle) {
   return strstr(haystack, needle) != NULL;
 }
 
-void cleanPath(char *path) {}

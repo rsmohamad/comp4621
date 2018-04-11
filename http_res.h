@@ -2,22 +2,20 @@
 #define HTTPRES_H
 
 struct HTTPRes {
-  int chunked;
   int gzipped;
+  char *fname;
+
   char *type;
-  char *date;
+  char date[512];
   char *server;
   char *status;
   size_t len;
-  unsigned char *content;
 
   // Keep alive properties
   int max;
-  int timeout;
+  int to;
 };
 
-void cleanup(struct HTTPRes *);
-void setKeepAlive(struct HTTPRes *, int, int);
 void setContent(struct HTTPRes *, char *, int);
 void setCurrentDate(struct HTTPRes *);
 void writeToSocket(struct HTTPRes *, int);

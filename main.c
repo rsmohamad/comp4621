@@ -13,7 +13,7 @@
 #define PORT 80
 #define QUEUE_LEN 5
 #define TIMEOUT 5
-#define MAX_REQ 2
+#define MAX_REQ 10
 
 int listenfd;
 
@@ -23,10 +23,8 @@ void *serveFile(void *sock) {
   int served = 0;
 
   while (served++ < MAX_REQ) {
-    if (read(sockfd, txbuf, MAXLINE) <= 0) {
-      printf("Connection timeout, closing socket: %d\n", sockfd);
+    if (read(sockfd, txbuf, MAXLINE) <= 0)
       break;
-    }
 
     struct HTTPReq *req = parseRequest(txbuf);
     if (req == NULL) {
@@ -42,17 +40,19 @@ void *serveFile(void *sock) {
 
     struct HTTPRes res;
     res.server = "comp4621";
+    res.to = TIMEOUT;
+    res.max = MAX_REQ;
     setCurrentDate(&res);
     setContent(&res, req->path, req->gzip);
-    setKeepAlive(&res, TIMEOUT, MAX_REQ);
     writeToSocket(&res, sockfd);
 
     free(req);
-    cleanup(&res);
   }
 
-  if (served >= MAX_REQ)
+  if (served > MAX_REQ)
     printf("Max requests served (%d), closing socket: %d\n", MAX_REQ, sockfd);
+  else
+    printf("Connection timeout, closing socket: %d\n", sockfd);
 
   close(sockfd);
   return 0;
