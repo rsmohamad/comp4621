@@ -4,21 +4,22 @@
 #include "strutils.h"
 
 /*
- * Returns NULL if there is a parsing error
+ * Returns -1 if there is a parsing error
  */
-struct HTTPReq *parseRequest(char *buf) {
+int parseRequest(struct HTTPReq *request, char *buf) {
   char **lines = tokenize(buf, "\r\n");
   char **_lines = lines;
 
   if (lines == NULL)
-    return NULL;
+    return -1;
 
   // Get the path
   char **firstline = tokenize(*lines++, " ");
-  if (firstline == NULL || firstline[1] == NULL)
-    return NULL;
+  if (firstline == NULL || firstline[1] == NULL) {
+    free(_lines);
+    return -1;
+  }
 
-  struct HTTPReq *request = malloc(sizeof(struct HTTPReq));
   request->path = firstline[1];
   request->host = "";
   request->gzip = 0;
@@ -35,5 +36,5 @@ struct HTTPReq *parseRequest(char *buf) {
   }
 
   free(_lines);
-  return request;
+  return 0;
 }

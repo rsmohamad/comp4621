@@ -37,4 +37,3 @@ char *getValue(char *text, char *key, char *delim) {
 int contains(char *haystack, char *needle) {
   return strstr(haystack, needle) != NULL;
 }
-

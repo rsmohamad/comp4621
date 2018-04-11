@@ -5,8 +5,8 @@ struct HTTPRes {
   int gzipped;
   char *fname;
 
-  char *type;
   char date[512];
+  char *type;
   char *server;
   char *status;
   size_t len;
@@ -17,7 +17,6 @@ struct HTTPRes {
 };
 
 void setContent(struct HTTPRes *, char *, int);
-void setCurrentDate(struct HTTPRes *);
 void writeToSocket(struct HTTPRes *, int);
 
 #endif

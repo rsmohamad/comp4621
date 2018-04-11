@@ -7,6 +7,6 @@ struct HTTPReq {
   int gzip;
 };
 
-struct HTTPReq *parseRequest(char *);
+int parseRequest(struct HTTPReq *, char *);
 
 #endif
