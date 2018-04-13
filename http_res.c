@@ -47,9 +47,12 @@ void getHeaderStr(struct HTTPRes *res, char *h) {
   if (res->gzipped)
     sprintf(h + strlen(h), "Content-Encoding: gzip\r\n");
   sprintf(h + strlen(h), "Transfer-Encoding: chunked\r\n");
-  sprintf(h + strlen(h), "Keep-Alive: ");
-  sprintf(h + strlen(h), "timeout=%d, max=%d\r\n", res->to, res->max);
-  sprintf(h + strlen(h), "Connection: keep-alive\r\n");
+  if (res->persistent) {
+    sprintf(h + strlen(h), "Keep-Alive: ");
+    sprintf(h + strlen(h), "timeout=%d, max=%d\r\n", res->to, res->max);
+    sprintf(h + strlen(h), "Connection: keep-alive\r\n");
+  } else
+    sprintf(h + strlen(h), "Connection: close\r\n");
   sprintf(h + strlen(h), "\r\n");
 }
 

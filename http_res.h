@@ -2,6 +2,7 @@
 #define HTTPRES_H
 
 struct HTTPRes {
+  int persistent;
   int gzipped;
   char *fname;
 

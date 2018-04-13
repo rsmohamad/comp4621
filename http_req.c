@@ -23,6 +23,7 @@ int parseRequest(struct HTTPReq *request, char *buf) {
   request->path = firstline[1];
   request->host = "";
   request->gzip = 0;
+  request->persistent = 1;
   free(firstline);
 
   // Get the fields
@@ -33,6 +34,8 @@ int parseRequest(struct HTTPReq *request, char *buf) {
       request->host = value;
     else if ((value = getValue(current, "Accept-Encoding", ": ")))
       request->gzip = contains(value, "gzip");
+    else if ((value = getValue(current, "Connection", ": ")))
+      request->persistent = !contains(value, "close");
   }
 
   free(_lines);

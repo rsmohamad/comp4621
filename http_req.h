@@ -5,6 +5,7 @@ struct HTTPReq {
   char *path;
   char *host;
   int gzip;
+  int persistent;
 };
 
 int parseRequest(struct HTTPReq *, char *);

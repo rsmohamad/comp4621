@@ -26,6 +26,7 @@ void *serveFile(void *sock) {
       break;
 
     struct HTTPReq req;
+    struct HTTPRes res;
     if (parseRequest(&req, txbuf)) {
       fprintf(stderr, "Error: bad http request\n");
       close(sockfd);
@@ -33,18 +34,16 @@ void *serveFile(void *sock) {
     }
 
     printf("sock: %d\n", sockfd);
-    struct HTTPRes res;
     res.server = "comp4621";
+    res.persistent = req.persistent;
     res.to = TIMEOUT;
     res.max = MAX_REQ;
     setContent(&res, req.path, req.gzip);
     writeToSocket(&res, sockfd);
-  }
 
-  if (served > MAX_REQ)
-    printf("Max requests served (%d), closing socket: %d\n", MAX_REQ, sockfd);
-  else
-    printf("Connection timeout, closing socket: %d\n", sockfd);
+    if (!req.persistent)
+      break;
+  }
 
   close(sockfd);
   return 0;
