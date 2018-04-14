@@ -7,7 +7,7 @@
 #include "http_res.h"
 #include "zlib/zlib.h"
 
-#define CHUNK_SIZE 4096
+#define CHUNK_SIZE getpagesize()
 
 const struct {
   char *ext;

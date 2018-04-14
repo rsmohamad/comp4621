@@ -11,9 +11,9 @@
 
 #define MAXLINE 2048
 #define PORT 80
-#define QUEUE_LEN 5
-#define TIMEOUT 5
-#define MAX_REQ 10
+#define QUEUE_LEN 10
+#define TIMEOUT 15
+#define MAX_REQ 100
 
 int listenfd;
 
@@ -22,18 +22,22 @@ void *serveFile(void *sock) {
   char txbuf[MAXLINE] = {0};
 
   while (served++ < MAX_REQ) {
+    memset(txbuf, 0, MAXLINE);
     if (read(sockfd, txbuf, MAXLINE) <= 0)
       break;
+
+    printf("----Request-----\n");
+    printf("sockfd: %d\n", sockfd);
+    printf("%s\n", txbuf);
 
     struct HTTPReq req;
     struct HTTPRes res;
     if (parseRequest(&req, txbuf)) {
       fprintf(stderr, "Error: bad http request\n");
-      close(sockfd);
-      return 0;
+      break;
     }
 
-    printf("sock: %d\n", sockfd);
+    printf("----Response----\n");
     res.server = "comp4621";
     res.persistent = req.persistent;
     res.to = TIMEOUT;
