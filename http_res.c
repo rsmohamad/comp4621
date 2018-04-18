@@ -14,6 +14,7 @@ const struct {
   char *type;
 } mime[] = {{".css", "text/css"},
             {".jpg", "image/jpeg"},
+            {".mp4", "video/mp4"},
             {".jpeg", "image/jpeg"},
             {".png", "image/png"},
             {".pdf", "application/pdf"},
@@ -32,7 +33,7 @@ void setCurrentDate(struct HTTPRes *res) {
 
 void setContentType(struct HTTPRes *res) {
   char *ext = strrchr(res->fname, '.');
-  res->type = "text/plain";
+  res->type = "application/octet-stream";
 
   for (int ptr = 0; ext && mime[ptr].ext != 0; ptr++)
     if (strcmp(mime[ptr].ext, ext) == 0)
