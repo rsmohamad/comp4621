@@ -45,9 +45,9 @@ void getHeaderStr(struct HTTPRes *res, char *h) {
   sprintf(h + strlen(h), "Date: %s\r\n", res->date);
   sprintf(h + strlen(h), "Server: %s\r\n", res->server);
   sprintf(h + strlen(h), "Content-Type: %s\r\n", res->type);
+  sprintf(h + strlen(h), "Transfer-Encoding: chunked\r\n");
   if (res->gzipped)
     sprintf(h + strlen(h), "Content-Encoding: gzip\r\n");
-  sprintf(h + strlen(h), "Transfer-Encoding: chunked\r\n");
   if (res->persistent) {
     sprintf(h + strlen(h), "Keep-Alive: ");
     sprintf(h + strlen(h), "timeout=%d, max=%d\r\n", res->to, res->max);
@@ -57,12 +57,18 @@ void getHeaderStr(struct HTTPRes *res, char *h) {
   sprintf(h + strlen(h), "\r\n");
 }
 
-void compressAndWrite(char *fname, int sockfd, int chunk) {
-  int compressed, filefd = open(fname, O_RDONLY, 0);
-  unsigned char out[chunk], in[chunk];
+void writeChunk(int sockfd, char *data, size_t len) {
   char header[16];
-  z_stream s;
+  sprintf(header, "%X\r\n", len);
+  write(sockfd, header, strlen(header));
+  write(sockfd, data, len);
+  write(sockfd, "\r\n", 2);
+}
 
+void compressAndWrite(char *fname, int sockfd, int chunk) {
+  int filefd = open(fname, O_RDONLY, 0);
+  unsigned char out[chunk], in[chunk];
+  z_stream s;
   s.zalloc = s.zfree = s.opaque = NULL;
   deflateInit2(&s, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15 | 16, 8,
                Z_DEFAULT_STRATEGY);
@@ -72,12 +78,7 @@ void compressAndWrite(char *fname, int sockfd, int chunk) {
     s.next_out = out;
     s.next_in = in;
     deflate(&s, Z_SYNC_FLUSH);
-
-    compressed = chunk - s.avail_out;
-    sprintf(header, "%X\r\n", compressed);
-    write(sockfd, header, strlen(header));
-    write(sockfd, out, compressed);
-    write(sockfd, "\r\n", 2);
+    writeChunk(sockfd, out, chunk - s.avail_out);
   }
 
   write(sockfd, "0\r\n\r\n", 5);
@@ -87,16 +88,29 @@ void compressAndWrite(char *fname, int sockfd, int chunk) {
 
 void readChunkAndWrite(char *fname, int sockfd, int chunk) {
   int filefd = open(fname, O_RDONLY, 0), len;
-  char buf[chunk], header[16];
+  char buf[chunk];
 
-  while ((len = read(filefd, buf, chunk)) > 0) {
-    sprintf(header, "%X\r\n", len);
-    write(sockfd, header, strlen(header));
-    write(sockfd, buf, len);
-    write(sockfd, "\r\n", 2);
-  }
+  while ((len = read(filefd, buf, chunk)) > 0)
+    writeChunk(sockfd, buf, len);
+
   write(sockfd, "0\r\n\r\n", 5);
   close(filefd);
+}
+
+void set400(struct HTTPRes *res) {
+  res->gzipped = 1;
+  res->fname = "400.html";
+  res->status = "400 Bad Request";
+  setCurrentDate(res);
+  setContentType(res);
+}
+
+void set501(struct HTTPRes *res) {
+  res->gzipped = 1;
+  res->fname = "501.html";
+  res->status = "501 Not Implemented";
+  setCurrentDate(res);
+  setContentType(res);
 }
 
 void setContent(struct HTTPRes *res, char *path, int useGzip) {

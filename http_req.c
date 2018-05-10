@@ -20,6 +20,7 @@ int parseRequest(struct HTTPReq *request, char *buf) {
     return -1;
   }
 
+  request->type = firstline[0];
   request->path = firstline[1];
   request->host = "";
   request->gzip = 0;

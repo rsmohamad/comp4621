@@ -4,6 +4,7 @@
 struct HTTPReq {
   char *path;
   char *host;
+  char *type;
   int gzip;
   int persistent;
 };

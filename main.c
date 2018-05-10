@@ -32,8 +32,18 @@ void *serveFile(void *sock) {
 
     struct HTTPReq req;
     struct HTTPRes res;
+
     if (parseRequest(&req, txbuf)) {
       fprintf(stderr, "Error: bad http request\n");
+      set400(&res);
+      writeToSocket(&res, sockfd);
+      break;
+    }
+
+    if (strcmp(req.type, "GET")) {
+      fprintf(stderr, "Error: not a GET request\n");
+      set501(&res);
+      writeToSocket(&res, sockfd);
       break;
     }
 

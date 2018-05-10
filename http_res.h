@@ -18,6 +18,8 @@ struct HTTPRes {
 };
 
 void setContent(struct HTTPRes *, char *, int);
+void set400(struct HTTPRes *res);
+void set501(struct HTTPRes *res);
 void writeToSocket(struct HTTPRes *, int);
 
 #endif
